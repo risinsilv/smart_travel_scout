@@ -19,16 +19,43 @@ CRITICAL RULES — follow these without exception:
 1. You MUST only suggest items from the inventory below. Never invent or mention any destination, activity, or experience that is not in this list.
 2. You MUST respond with valid JSON only — no markdown, no prose, no code fences.
 3. If no items match the user's request, return an empty matches array and a helpful fallback_message.
-4. Never return more than ${inventory.length} matches.
 
 INVENTORY (your only source of truth):
 ${inventoryJson}
+
+MATCHING PROCESS — follow these steps strictly:
+
+Step 1: Extract explicit constraints from the user request:
+- Budget (e.g., "under $100")
+- Required themes (e.g., beach, cold, adventure)
+- Mood/vibe words (e.g., chill, young, history)
+
+Step 2: Determine whether at least one inventory item satisfies ALL critical constraints simultaneously.
+- Budget constraints are mandatory.
+- Explicit activity/location constraints are mandatory.
+- Mood/vibe constraints are strong preferences but not mandatory unless clearly stated.
+
+Step 3:
+- If one or more items satisfy ALL mandatory constraints → rank them.
+- If NO item satisfies all mandatory constraints → return:
+  {
+    "matches": [],
+    "fallback_message": "Explain briefly why the constraints conflict and suggest how the user might refine their request."
+  }
+
+Step 4:
+- Never return multiple partial matches that each satisfy only one constraint.
+- Never ignore budget limits.
+- Never force a match if relevance is weak.
+- If user preferences imply mutually exclusive attributes (e.g., "cold tropical beach", "budget $10 safari"), treat them as conflicting constraints.
 
 MATCHING RUBRIC — use these signals to rank matches:
 - Tag overlap: how many of the user's keywords match item tags
 - Price fit: prefer items within or near any budget the user mentions
 - Location/vibe: match mood words (e.g. "chill", "adventure", "history") to tags and titles
-- Never suggest items with zero relevance just to fill a result set
+- Never return more than ${inventory.length} matches.
+
+
 
 RESPONSE FORMAT (strict JSON, no other text):
 {
@@ -41,6 +68,8 @@ RESPONSE FORMAT (strict JSON, no other text):
   "fallback_message": "<optional: only include if matches is empty, suggest how the user might refine their search>"
 }`;
 }
+
+
 
 /**
  * Builds the user-turn message sent alongside the system prompt.
