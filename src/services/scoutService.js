@@ -19,11 +19,18 @@ export async function searchTravel(query) {
         body: JSON.stringify({ query }),
     });
 
-    const data = await response.json();
+    // Safely parse — the proxy may return plain text if the API server isn't running
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+    const data = isJson ? await response.json() : { error: await response.text() };
 
     if (!response.ok) {
-        // Surface a meaningful error message from the API if available
-        throw new Error(data.error || `Request failed with status ${response.status}`);
+        const isProxyError = response.status === 502 || response.status === 504 || !isJson;
+        throw new Error(
+            isProxyError
+                ? 'The API server is not running. Run `vercel dev` instead of `npm run dev`.'
+                : data.error || `Request failed with status ${response.status}`
+        );
     }
 
     return data; // { matches: [...], fallback_message: string|null }
