@@ -1,17 +1,15 @@
 import ChatMessage from '../components/chat/ChatMessage';
 import ChatInput from '../components/chat/ChatInput';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
-import MenuIcon from '@mui/icons-material/Menu';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import { searchTravel } from '../services/scoutService';
 
 const ChatPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
-            content: "Welcome to Smart Travel Scout! I'm here to help you discover the perfect SRI Lankan experience from our exclusive inventory. What's on your mind today? (e.g., 'A surfing getaway under $100')",
+            content: "Welcome to Smart Travel Scout! I'm here to help you discover the perfect Sri Lankan experience from our exclusive inventory. What's on your mind today? (e.g., 'A surfing getaway under $100')",
         }
     ]);
     const messagesEndRef = useRef(null);
@@ -24,46 +22,44 @@ const ChatPage = () => {
         scrollToBottom();
     }, [messages]);
 
-    const handleSendMessage = (text) => {
+    const handleSendMessage = async (text) => {
+        // Append the user message immediately so the UI feels responsive
         const userMsg = { role: 'user', content: text };
         setMessages(prev => [...prev, userMsg]);
         setIsLoading(true);
 
-        // Simulated Logic
-        setTimeout(() => {
-            const assistantMsg = {
-                role: 'assistant',
-                content: `I've analyzed your request: "${text}". Here's the best match I found in our inventory:`,
-                matches: text.toLowerCase().includes('beach') || text.toLowerCase().includes('surf') ? [
-                    {
-                        title: "Surf & Chill Retreat",
-                        location: "Arugam Bay",
-                        price: 80,
-                        reason: "This matches your interest in surfing and beach vibes perfectly, and it's within a great budget range."
-                    }
-                ] : [
-                    {
-                        title: "High-Altitude Tea Trails",
-                        location: "Nuwara Eliya",
-                        price: 120,
-                        reason: "Since you didn't specify a beach, this cold-weather nature retreat is our top recommendation for a unique experience."
-                    }
-                ]
-            };
-            setMessages(prev => [...prev, assistantMsg]);
+        try {
+            const { matches, fallback_message } = await searchTravel(text);
+
+            let content = '';
+            let msgMatches = [];
+
+            if (matches && matches.length > 0) {
+                // Matches found — build a natural intro line
+                content = `I found ${matches.length} experience${matches.length > 1 ? 's' : ''} from our inventory that match your request:`;
+                msgMatches = matches;
+            } else {
+                // No matches — show the fallback guidance from the AI
+                content = fallback_message || "I couldn't find anything in our inventory that matches your request. Try describing your ideal vibe, budget, or activity!";
+            }
+
+            setMessages(prev => [...prev, { role: 'assistant', content, matches: msgMatches }]);
+        } catch (err) {
+            // Surface API / network errors gracefully rather than crashing
+            setMessages(prev => [
+                ...prev,
+                {
+                    role: 'assistant',
+                    content: `Something went wrong while scouting the inventory. ${err.message || 'Please try again.'}`,
+                }
+            ]);
+        } finally {
             setIsLoading(false);
-        }, 1500);
+        }
     };
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100vh', bgcolor: 'background.default' }}>
-            {/* Header */}
-            {/* <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', bgcolor: 'background.paper', justifyContent: 'center' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: 18, color: 'primary.main', letterSpacing: -0.5 }}>
-                    Smart Travel Scout
-                </Typography>
-            </Box> */}
-
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
                 {/* Message Area */}
                 <Box sx={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -81,7 +77,7 @@ const ChatPage = () => {
                     <Box sx={{ minHeight: '150px' }} />
                 </Box>
 
-                {/* Input Area */}
+                {/* Input Area — gradient fade so it sits on top of messages */}
                 <Box sx={{
                     position: 'absolute',
                     bottom: 0,
