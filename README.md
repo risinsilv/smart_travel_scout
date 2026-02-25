@@ -9,7 +9,7 @@ You can now offer multiple AI models in the chat interface. Set environment vari
 Example:
 
 ```
-VITE_MODEL_1=gemini-2.0-flash
+VITE_MODEL_1=gemini:gemini-3-flash-preview
 VITE_MODEL_2=openrouter:openai/gpt-5.2
 VITE_MODEL_3=gemini-1.0
 ```
