@@ -56,8 +56,6 @@ export default async function handler(req, res) {
             const { OpenRouter } = await import('@openrouter/sdk');
             const openRouter = new OpenRouter({
                 apiKey: orKey,
-                httpReferer: process.env.OPENROUTER_HTTP_REFERER,
-                xTitle: process.env.OPENROUTER_X_TITLE,
             });
 
             const modelName = clientModel || process.env.OPENROUTER_MODEL || 'openai/gpt-4o';
@@ -123,8 +121,15 @@ export default async function handler(req, res) {
     // --- Parse the raw JSON string from Gemini ---
     let parsed;
     try {
-        // Strip markdown code fences if the model wraps the JSON anyway
-        const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+        // Strip markdown code fences if the model wraps the JSON anyway.
+        // Some models prepend whitespace/newlines before ```json, so trim first.
+        let cleaned = (rawText ?? '').trim();
+        if (cleaned.startsWith('```')) {
+            cleaned = cleaned
+                .replace(/^```(?:json)?\s*/i, '')
+                .replace(/```\s*$/i, '')
+                .trim();
+        }
         parsed = JSON.parse(cleaned);
         console.log('[scout] Parsed AI JSON:', JSON.stringify(parsed, null, 2));
     } catch (parseError) {
