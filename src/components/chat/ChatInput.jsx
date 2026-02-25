@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, TextField, IconButton, InputAdornment, Typography } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
-const ChatInput = ({ onSendMessage, disabled }) => {
+const ChatInput = ({ onSendMessage, disabled, sx, showCaption = true, modelControl, cancelControl }) => {
     const [input, setInput] = useState('');
 
     const handleSend = () => {
@@ -26,9 +26,18 @@ const ChatInput = ({ onSendMessage, disabled }) => {
                 pb: 4,
                 width: '100%',
                 maxWidth: '1000px',
-                mx: 'auto'
+                mx: 'auto',
+                ...sx,
             }}
         >
+            {/* controls directly inside the chat box */}
+            {(modelControl || cancelControl) && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    {modelControl && <Box sx={{ flexShrink: 0 }}>{modelControl}</Box>}
+                    <Box sx={{ flex: 1, minWidth: 0 }} />
+                    {cancelControl && <Box sx={{ flexShrink: 0 }}>{cancelControl}</Box>}
+                </Box>
+            )}
             <TextField
                 fullWidth
                 multiline
@@ -67,18 +76,20 @@ const ChatInput = ({ onSendMessage, disabled }) => {
                     ),
                 }}
             />
-            <Typography
-                variant="caption"
-                sx={{
-                    display: 'block',
-                    textAlign: 'center',
-                    mt: 1.5,
-                    color: 'text.secondary',
-                    fontSize: 11
-                }}
-            >
-                Travel Scout is an AI experiment. Verify matching details before booking.
-            </Typography>
+            {showCaption && (
+                <Typography
+                    variant="caption"
+                    sx={{
+                        display: 'block',
+                        textAlign: 'center',
+                        mt: 1.5,
+                        color: 'text.secondary',
+                        fontSize: 11
+                    }}
+                >
+                    Travel Scout is an AI experiment. Verify matching details before booking.
+                </Typography>
+            )}
         </Box>
     );
 };
