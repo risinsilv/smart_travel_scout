@@ -30,8 +30,9 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { query } = req.body ?? {};
+    const { query, model: clientModel, provider: clientProvider } = req.body ?? {};
     console.log('[scout] Query received:', JSON.stringify(query));
+    console.log('[scout] Client requested model/provider:', clientModel, clientProvider);
 
     // Validate that a query string was provided
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
@@ -39,41 +40,78 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'A non-empty query string is required.' });
     }
 
-    // Initialise the Gemini client with the server-side API key
-    const apiKey = process.env.GEMINI_API_KEY;
-    const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-    console.log('[scout] API key present:', !!apiKey);
-    console.log('[scout] Using model:', modelName);
-
-    if (!apiKey) {
-        console.error('[scout] FATAL: GEMINI_API_KEY is not set in environment variables');
-        return res.status(500).json({ error: 'Server configuration error: missing API key.' });
-    }
-
+    // Determine which provider to use.  Default to Gemini if unspecified.
+    const provider = clientProvider || 'gemini';
     let rawText = '';
-    try {
-        // New @google/genai SDK — pass apiKey as an object property
-        const ai = new GoogleGenAI({ apiKey });
 
-        console.log('[scout] Calling Gemini API...');
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: buildUserMessage(query.trim()),
-            config: {
-                systemInstruction: buildSystemPrompt(inventory),
-                temperature: 0,                        // Deterministic — no creative drift
-                responseMimeType: 'application/json',  // Ask Gemini to return JSON directly
-            },
-        });
+    if (provider === 'openrouter') {
+        // openrouter requires its own API key
+        const orKey = process.env.OPENROUTER_API_KEY;
+        if (!orKey) {
+            console.error('[scout] FATAL: OPENROUTER_API_KEY is not set but client requested openrouter');
+            return res.status(500).json({ error: 'Server configuration error: missing OpenRouter API key.' });
+        }
 
-        rawText = response.text;
-        console.log('[scout] Raw Gemini response:', rawText);
-    } catch (geminiError) {
-        console.error('[scout] ❌ Gemini API call failed:');
-        console.error('  Message:', geminiError.message);
-        console.error('  Status:', geminiError.status);
-        console.error('  Stack:', geminiError.stack);
-        return res.status(502).json({ error: 'Failed to reach the AI service. Please try again.' });
+        try {
+            const { OpenRouter } = await import('@openrouter/sdk');
+            const openRouter = new OpenRouter({ apiKey: orKey });
+
+            const modelName = clientModel || process.env.OPENROUTER_MODEL || 'openai/gpt-4o';
+            console.log('[scout] Calling OpenRouter API with model', modelName);
+
+            const completion = await openRouter.chat.send({
+                model: modelName,
+                messages: [
+                    { role: 'system', content: buildSystemPrompt(inventory) },
+                    { role: 'user', content: buildUserMessage(query.trim()) },
+                ],
+                stream: false,
+            });
+
+            rawText = completion?.choices?.[0]?.message?.content || '';
+            console.log('[scout] Raw OpenRouter response:', rawText);
+        } catch (orError) {
+            console.error('[scout] ❌ OpenRouter API call failed:');
+            console.error('  Message:', orError.message);
+            console.error('  Stack:', orError.stack);
+            return res.status(502).json({ error: 'Failed to reach the AI service. Please try again.' });
+        }
+    } else {
+        // default to Gemini
+        const apiKey = process.env.GEMINI_API_KEY;
+        const modelName = clientModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+        console.log('[scout] API key present:', !!apiKey);
+        console.log('[scout] Using model:', modelName);
+
+        if (!apiKey) {
+            console.error('[scout] FATAL: GEMINI_API_KEY is not set in environment variables');
+            return res.status(500).json({ error: 'Server configuration error: missing API key.' });
+        }
+
+        try {
+            // New @google/genai SDK — pass apiKey as an object property
+            const ai = new GoogleGenAI({ apiKey });
+
+            console.log('[scout] Calling Gemini API...');
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents: buildUserMessage(query.trim()),
+                config: {
+                    systemInstruction: buildSystemPrompt(inventory),
+                    temperature: 0,                        // Deterministic — no creative drift
+                    responseMimeType: 'application/json',  // Ask Gemini to return JSON directly
+                },
+            });
+
+            rawText = response.text;
+            console.log('[scout] Raw Gemini response:', rawText);
+        } catch (geminiError) {
+            console.error('[scout] ❌ Gemini API call failed:');
+            console.error('  Message:', geminiError.message);
+            console.error('  Status:', geminiError.status);
+            console.error('  Stack:', geminiError.stack);
+            return res.status(502).json({ error: 'Failed to reach the AI service. Please try again.' });
+        }
     }
 
     // --- Parse the raw JSON string from Gemini ---
