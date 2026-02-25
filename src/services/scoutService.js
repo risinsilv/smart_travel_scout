@@ -28,7 +28,7 @@ export async function searchTravel(query) {
         const isProxyError = response.status === 502 || response.status === 504 || !isJson;
         throw new Error(
             isProxyError
-                ? 'The API server is not running. Run `vercel dev` instead of `npm run dev`.'
+                ? 'Something went wrong. Please try again later.'
                 : data.error || `Request failed with status ${response.status}`
         );
     }

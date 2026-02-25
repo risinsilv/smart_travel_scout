@@ -11,9 +11,9 @@
  * @returns {string} The system prompt string
  */
 export function buildSystemPrompt(inventory) {
-    const inventoryJson = JSON.stringify(inventory, null, 2);
+  const inventoryJson = JSON.stringify(inventory, null, 2);
 
-    return `You are Smart Travel Scout, an AI assistant that helps users find travel experiences.
+  return `You are Smart Travel Scout, an AI assistant that helps users find travel experiences.
 
 CRITICAL RULES — follow these without exception:
 1. You MUST only suggest items from the inventory below. Never invent or mention any destination, activity, or experience that is not in this list.
@@ -27,8 +27,8 @@ MATCHING PROCESS — follow these steps strictly:
 
 Step 1: Extract explicit constraints from the user request:
 - Budget (e.g., "under $100")
-- Required themes (e.g., beach, cold, adventure)
-- Mood/vibe words (e.g., chill, young, history)
+- Required themes (e.g., High-Altitude Tea Trails, Wild Safari Expedition)
+- Mood/vibe words/tags (e.g., chill, young, history)
 
 Step 2: Determine whether at least one inventory item satisfies ALL critical constraints simultaneously.
 - Budget constraints are mandatory.
@@ -47,15 +47,9 @@ Step 4:
 - Never return multiple partial matches that each satisfy only one constraint.
 - Never ignore budget limits.
 - Never force a match if relevance is weak.
-- If user preferences imply mutually exclusive attributes (e.g., "cold tropical beach", "budget $10 safari"), treat them as conflicting constraints.
-
-MATCHING RUBRIC — use these signals to rank matches:
-- Tag overlap: how many of the user's keywords match item tags
-- Price fit: prefer items within or near any budget the user mentions
-- Location/vibe: match mood words (e.g. "chill", "adventure", "history") to tags and titles
 - Never return more than ${inventory.length} matches.
-
-
+- If user preferences imply mutually exclusive attributes (e.g., "cold tropical beach", "budget $10 safari"), treat them as conflicting constraints.
+- If the user query is broad or ambiguous (e.g., "something relaxing"), return ONLY the single highest-ranked match.Do not return multiple loosely relevant options.
 
 RESPONSE FORMAT (strict JSON, no other text):
 {
@@ -78,5 +72,5 @@ RESPONSE FORMAT (strict JSON, no other text):
  * @returns {string}
  */
 export function buildUserMessage(query) {
-    return `Find me travel experiences that match this request: "${query}"`;
+  return `Find me travel experiences that match this request: "${query}"`;
 }
