@@ -54,18 +54,24 @@ export default async function handler(req, res) {
 
         try {
             const { OpenRouter } = await import('@openrouter/sdk');
-            const openRouter = new OpenRouter({ apiKey: orKey });
+            const openRouter = new OpenRouter({
+                apiKey: orKey,
+                httpReferer: process.env.OPENROUTER_HTTP_REFERER,
+                xTitle: process.env.OPENROUTER_X_TITLE,
+            });
 
             const modelName = clientModel || process.env.OPENROUTER_MODEL || 'openai/gpt-4o';
             console.log('[scout] Calling OpenRouter API with model', modelName);
 
             const completion = await openRouter.chat.send({
-                model: modelName,
-                messages: [
-                    { role: 'system', content: buildSystemPrompt(inventory) },
-                    { role: 'user', content: buildUserMessage(query.trim()) },
-                ],
-                stream: false,
+                chatGenerationParams: {
+                    model: modelName,
+                    messages: [
+                        { role: 'system', content: buildSystemPrompt(inventory) },
+                        { role: 'user', content: buildUserMessage(query.trim()) },
+                    ],
+                    stream: false,
+                },
             });
 
             rawText = completion?.choices?.[0]?.message?.content || '';
