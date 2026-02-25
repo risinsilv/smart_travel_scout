@@ -113,7 +113,6 @@ Push to a Vercel-connected repository. Vercel will automatically detect the `/ap
 
 **Technical hurdle:** Connecting the Gemini API response to the frontend reliably.
 
-1.
 
 The first version sent the full AI response text directly to the UI, but the Gemini model occasionally wrapped its JSON output in markdown code fences (` ```json … ``` `) even when `responseMimeType: 'application/json'` was set. This caused `JSON.parse` to throw and the whole request to fail with a confusing "invalid JSON" error.
 
@@ -132,7 +131,6 @@ After that, parsing became reliable across different model versions.
 
 ---
 
-2. 
 
 ### 2. The Scalability Thought
 
@@ -163,6 +161,7 @@ Here is how I would adapt:
 **Instance of a bad suggestion:** when i asked the AI agent to suggest me a api intigration process of the relevent LLM model:
 
 I used Claude Code as my AI agent to generate the integration code for calling the API. The code provided was mostly correct, but when I deployed and ran it on Vercel, it resulted in a response error. Although the model suggested fixes, the issue persisted, so I had to log the entire API request process to debug it properly. Through debugging, I discovered that my system was not following the recommended procedure outlined in the Gemini documentation. After reviewing the documentation carefully, I found that my implementation was using a different component to configure the API request instead of the recommended approach described in the official documentation.Then I implimented the recommended approach.
+
 ---
 
 
