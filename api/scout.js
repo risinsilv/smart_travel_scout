@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     } else {
         // default to Gemini
         const apiKey = process.env.GEMINI_API_KEY;
-        const modelName = clientModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+        const modelName = clientModel || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
         console.log('[scout] API key present:', !!apiKey);
         console.log('[scout] Using model:', modelName);
 
