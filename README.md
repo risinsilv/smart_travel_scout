@@ -156,11 +156,11 @@ Here is how I would adapt:
 
 ### 3. The AI Reflection
 
-**AI tools used:** GitHub Copilot (inline suggestions) and ChatGPT (architecture questions and debugging help).
+**AI tools used:** Claude Opus 4.6 and GPT 5.2.
 
-**Instance of a bad suggestion:** when i asked the AI agent to suggest me a api intigration process of the relevent LLM model:
+**Instance of a bad suggestion:** When I asked the AI agent to suggest me a api intigration process of the relevent LLM model:
 
-I used Claude Code as my AI agent to generate the integration code for calling the API. The code provided was mostly correct, but when I deployed and ran it on Vercel, it resulted in a response error. Although the model suggested fixes, the issue persisted, so I had to log the entire API request process to debug it properly. Through debugging, I discovered that my system was not following the recommended procedure outlined in the Gemini documentation. After reviewing the documentation carefully, I found that my implementation was using a different component to configure the API request instead of the recommended approach described in the official documentation.Then I implimented the recommended approach.
+I used Claude Code as my AI agent to generate the integration code for calling the API. The code provided was mostly correct, but when I deployed and ran it on Vercel, it resulted in a response error. Although the model suggested fixes, the issue persisted, so I had to log the entire API request process to debug it properly. Through debugging, I discovered that my system was not following the recommended procedure outlined in the Gemini documentation. After reviewing the documentation carefully, I found that my implementation was using a different component to configure the API request instead of the recommended approach described in the official documentation. Then I implemented the recommended approach.
 
 ---
 
